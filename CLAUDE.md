@@ -42,6 +42,14 @@ repo owner; state that before any fork). Phase 0/1 analysis lives in `hernas/ANA
 - Battery impact is arithmetic on loop periods, not measured mAh.
 - Dockerfile and the non-OpenCode client snippets are UNTESTED.
 
+## Where it runs (as of this session)
+- Local demo: `127.0.0.1:7420` (nohup, log `~/../tmp/hernas-demo.log`, data `/usr/tmp/hernas-demo`).
+- Hosted: `https://hernas-mcp.onrender.com` (Render free, Singapore). Secrets live in
+  `~/projects/hernas/render.env` (0600) and in the Render service env — never in the repo.
+- OpenCode config: `~/.config/opencode/opencode.json` has `hernas` (local) and `hernas-cloud`
+  (Render) entries, identity `opencode`. V2 shape: servers under `mcp.servers`, `oauth: false`.
+- Auto-deploy is ON: every `git push` to main redeploys and wipes the ephemeral instance state.
+
 ## Verification rules
 "Done" = pasted command output in `hernas/SELF_CHECK.md`. 38/38 tests green is the bar for the
 core; anything new non-trivial gets a test before merge. No TODOs in shipped paths.
