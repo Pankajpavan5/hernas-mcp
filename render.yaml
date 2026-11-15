@@ -1,0 +1,32 @@
+# Render Blueprint — one free web service running the whole Hernas server
+# (MCP for the agents, relay API for the phone, dashboard for you; one process, one port).
+#
+# Deploy: push this folder to a GitHub repo, then in Render:
+#   New → Blueprint → pick the repo → Apply.
+#
+# Render injects PORT; config.ts reads PORT as a fallback for HERNAS_PORT.
+services:
+  - type: web
+    name: hernas-mcp
+    runtime: node
+    plan: free                # spins down after ~15 min idle; a polling phone keeps it awake
+    region: singapore         # closest to India. others: oregon, ohio, virginia, frankfurt
+    buildCommand: npm ci --omit=dev
+    startCommand: node src/server.ts
+    healthCheckPath: /healthz # unauthenticated on purpose, so Render can probe it
+    envVars:
+      - key: NODE_VERSION
+        value: "26"
+      - key: HERNAS_HOST
+        value: "0.0.0.0"      # Render terminates TLS and proxies to this port
+      - key: HERNAS_DATA
+        value: /tmp/hernas    # free plan: ephemeral. db and shots are lost on restart
+      - key: HERNAS_MCP_KEY
+        sync: false           # REQUIRED in public: anyone without it cannot reach /mcp
+      - key: HERNAS_RELAY_TOKEN
+        sync: false           # set it once; phone clients keep working across redeploys
+      - key: HERNAS_ACCESS_KEY
+        sync: false           # optional: stable dashboard key (else a fresh one lands in the logs each boot)
+#
+# Free plan has no persistent disk: threads, audit and shots live only for the instance lifetime
+# (a deploy, restart or spin-down starts empty). Render disks need a paid instance type.

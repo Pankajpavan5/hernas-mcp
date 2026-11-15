@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hernas MCP</title>
+<style>
+  :root{
+    --bg:#0b0d10; --panel:#12161b; --panel2:#171c23; --line:#232a33;
+    --text:#e6edf3; --dim:#8b98a5; --accent:#3fb950; --accent2:#4493f8;
+    --warn:#d29922; --bad:#f85149; --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
+  a{color:var(--accent2)}
+  header{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0;z-index:10}
+  header h1{font-size:15px;margin:0;letter-spacing:.02em}
+  header h1 b{color:var(--accent)}
+  .grow{flex:1}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--bad);display:inline-block}
+  .dot.on{background:var(--accent)}
+  nav{display:flex;gap:2px;padding:0 20px;border-bottom:1px solid var(--line);background:var(--panel);overflow-x:auto}
+  nav button{background:none;border:0;color:var(--dim);padding:11px 14px;cursor:pointer;font:inherit;border-bottom:2px solid transparent;white-space:nowrap}
+  nav button[aria-selected=true]{color:var(--text);border-bottom-color:var(--accent)}
+  main{padding:20px;max-width:1180px;margin:0 auto}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+  .card h3{margin:0 0 8px;font-size:13px;color:var(--dim);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+  .kv{display:flex;justify-content:space-between;gap:12px;padding:3px 0;font-size:13px}
+  .kv span:first-child{color:var(--dim)}
+  .kv span:last-child{font-family:var(--mono);font-size:12px;text-align:right;word-break:break-all}
+  button.btn{background:var(--accent);color:#04120a;border:0;border-radius:7px;padding:8px 14px;font:inherit;font-weight:600;cursor:pointer}
+  button.btn.ghost{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+  button.btn.bad{background:var(--bad);color:#fff}
+  button.btn:disabled{opacity:.5;cursor:not-allowed}
+  input,textarea,select{background:#0d1117;color:var(--text);border:1px solid var(--line);border-radius:7px;padding:9px 11px;font:inherit;width:100%}
+  input:focus,textarea:focus{outline:2px solid var(--accent2);outline-offset:-1px}
+  .row{display:flex;gap:8px;align-items:center;margin:8px 0}
+  .row>*{min-width:0}
+  .muted{color:var(--dim);font-size:12px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--dim);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+  td.mono,th.mono{font-family:var(--mono)}
+  .pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;border:1px solid var(--line);color:var(--dim)}
+  .pill.on{color:var(--accent);border-color:#2ea043}
+  .pill.bad{color:var(--bad);border-color:#6e2a26}
+  .pill.warn{color:var(--warn);border-color:#5c4a15}
+  #login{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:100}
+  #login .box{width:340px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:26px}
+  #login h2{margin:0 0 4px;font-size:17px}
+  #login p{margin:0 0 18px;color:var(--dim);font-size:12.5px}
+  #key{letter-spacing:.35em;text-align:center;font-family:var(--mono);font-size:16px}
+  .err{color:var(--bad);font-size:12.5px;min-height:18px;margin-top:8px}
+  .chat{display:grid;grid-template-columns:210px 1fr;gap:12px}
+  @media(max-width:720px){.chat{grid-template-columns:1fr}}
+  .threads button{display:block;width:100%;text-align:left;background:none;border:0;border-radius:7px;color:var(--text);padding:9px 10px;cursor:pointer;font:inherit}
+  .threads button[aria-current=true]{background:var(--panel2)}
+  .threads .tid{font-family:var(--mono);font-size:12.5px}
+  #transcript{height:380px;overflow:auto;background:#0d1117;border:1px solid var(--line);border-radius:10px;padding:12px}
+  .msg{margin-bottom:12px;max-width:80%}
+  .msg .who{font-size:11px;color:var(--dim);margin-bottom:2px;font-family:var(--mono)}
+  .msg .body{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 11px;white-space:pre-wrap;word-break:break-word}
+  .msg.mine{margin-left:auto}
+  .msg.mine .body{background:#12261a;border-color:#1f5130}
+  .meter{height:6px;background:var(--panel2);border-radius:99px;overflow:hidden;margin-top:4px}
+  .meter i{display:block;height:100%;background:var(--accent)}
+  .meter i.hot{background:var(--warn)}
+  .meter i.max{background:var(--bad)}
+  .empty{color:var(--dim);text-align:center;padding:40px 0;font-size:13px}
+  .toast{position:fixed;bottom:18px;right:18px;background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:9px;padding:11px 15px;font-size:13px;max-width:340px;z-index:200;opacity:0;transform:translateY(8px);transition:.18s}
+  .toast.show{opacity:1;transform:none}
+  .toast.bad{border-left-color:var(--bad)}
+  code{font-family:var(--mono);font-size:12px;background:var(--panel2);padding:1px 5px;border-radius:4px}
+  .hide{display:none!important}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <div class="box">
+    <h2>Hernas MCP</h2>
+    <p>Enter the 10-digit key printed when the server started.</p>
+    <input id="key" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="0000000000" autofocus>
+    <div class="err" id="loginerr"></div>
+    <button class="btn" id="loginbtn" style="width:100%;margin-top:12px">Unlock</button>
+  </div>
+</div>
+
+<header>
+  <h1><b>Hernas</b> MCP</h1>
+  <span class="muted" id="uptime"></span>
+  <div class="grow"></div>
+  <span class="muted">live</span><span class="dot" id="wdot"></span>
+  <button class="btn ghost" id="logout">Lock</button>
+</header>
+
+<nav role="tablist">
+  <button role="tab" data-tab="devices" aria-selected="true">Devices</button>
+  <button role="tab" data-tab="bridge" aria-selected="false">Bridge</button>
+  <button role="tab" data-tab="audit" aria-selected="false">Audit</button>
+  <button role="tab" data-tab="settings" aria-selected="false">Settings</button>
+</nav>
+
+<main>
+  <section id="tab-devices">
+    <div class="row" style="margin-top:0">
+      <h3 style="margin:0;font-size:13px;color:var(--dim)">Attached phones</h3>
+      <div class="grow"></div>
+      <button class="btn ghost" id="refresh">Refresh</button>
+    </div>
+    <div class="grid" id="devices"></div>
+  </section>
+
+  <section id="tab-bridge" class="hide">
+    <div class="chat">
+      <div class="card">
+        <h3>Threads</h3>
+        <div class="threads" id="threads"></div>
+        <div class="row" style="margin-top:12px">
+          <input id="newthread" placeholder="new thread id">
+          <button class="btn ghost" id="addthread">+</button>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <div class="row" style="margin-top:0">
+            <strong id="threadtitle" style="font-family:var(--mono)">—</strong>
+            <div class="grow"></div>
+            <span class="pill" id="hopspill">hops 0/0</span>
+            <button class="btn bad" id="stop">STOP</button>
+          </div>
+          <div class="meter"><i id="hopmeter" style="width:0"></i></div>
+          <div id="transcript" style="margin-top:12px"><div class="empty">Pick a thread, or start one.</div></div>
+          <div class="row">
+            <input id="as" placeholder="as (your name)" value="you" style="flex:0 0 130px">
+            <input id="body" placeholder="Message the agents…" autocomplete="off">
+            <button class="btn" id="send">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-audit" class="hide">
+    <div class="card">
+      <h3>Every tool call</h3>
+      <table>
+        <thead><tr><th>when</th><th>tool</th><th>agent</th><th>device</th><th>ms</th><th>args</th></tr></thead>
+        <tbody id="audit"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="tab-settings" class="hide">
+    <div class="grid">
+      <div class="card">
+        <h3>Server</h3>
+        <div class="kv"><span>Version</span><span id="sver">—</span></div>
+        <div class="kv"><span>MCP endpoint</span><span id="smcp">—</span></div>
+        <div class="kv"><span>Guards</span><span id="sguard">—</span></div>
+        <div class="kv"><span>Attach cap</span><span id="sattach">—</span></div>
+      </div>
+      <div class="card">
+        <h3>Connect a client</h3>
+        <p class="muted" style="margin:0 0 6px">Send this header on every request so replies can be routed:</p>
+        <code>x-hernas-agent: &lt;your-agent-id&gt;</code>
+        <p class="muted" style="margin:12px 0 6px">Local MCP URL:</p>
+        <code id="mcpurl"></code>
+      </div>
+      <div class="card">
+        <h3>Key</h3>
+        <p class="muted" style="margin:0 0 10px">Rotate with <code>npm run key:rotate</code>. A rotation drops every session.</p>
+        <div class="kv"><span>Stored</span><span>scrypt, 0600</span></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let csrf = "";
+let state = { devices: [], agents: [], threads: [], audit: [], messages: [], job: {} };
+let activeThread = "";
+let ws = null;
+
+function toast(msg, bad) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.className = "toast show" + (bad ? " bad" : "");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { t.className = "toast"; }, 3200);
+}
+
+function ago(ts) {
+  if (!ts) return "—";
+  const s = Math.round(Date.now() / 1000 - ts);
+  if (s < 60) return s + "s";
+  if (s < 3600) return Math.round(s / 60) + "m";
+  return Math.round(s / 3600) + "h";
+}
+
+async function api(path, opts = {}) {
+  const headers = Object.assign({ "content-type": "application/json" }, opts.headers || {});
+  if (csrf) headers["x-hernas-csrf"] = csrf;
+  const res = await fetch(path, Object.assign({}, opts, { headers, credentials: "same-origin" }));
+  if (res.status === 401) { showLogin(); throw new Error("locked"); }
+  return res.json();
+}
+
+function showLogin() {
+  $("login").classList.remove("hide");
+  $("key").focus();
+}
+
+$("loginbtn").onclick = async () => {
+  const key = $("key").value.trim();
+  $("loginerr").textContent = "";
+  try {
+    const r = await fetch("/api/login", {
+      method: "POST", headers: { "content-type": "application/json" },
+      credentials: "same-origin", body: JSON.stringify({ key }),
+    });
+    const data = await r.json();
+    if (!r.ok) { $("loginerr").textContent = data.error || "wrong key"; return; }
+    csrf = data.csrf;
+    $("login").classList.add("hide");
+    $("key").value = "";
+    await load();
+    openWs();
+  } catch (e) {
+    $("loginerr").textContent = "cannot reach the server";
+  }
+};
+$("key").addEventListener("keydown", (e) => { if (e.key === "Enter") $("loginbtn").click(); });
+
+$("logout").onclick = async () => {
+  try { await api("/api/logout", { method: "POST" }); } catch {}
+  csrf = ""; if (ws) ws.close(); showLogin();
+};
+
+function showTab(name) {
+  if (!$("tab-" + name)) name = "devices";
+  document.querySelectorAll("nav button").forEach((x) => x.setAttribute("aria-selected", String(x.dataset.tab === name)));
+  document.querySelectorAll("main section").forEach((s) => s.classList.add("hide"));
+  $("tab-" + name).classList.remove("hide");
+}
+document.querySelectorAll("nav button").forEach((b) => {
+  b.onclick = () => { showTab(b.dataset.tab); history.replaceState(null, "", "#" + b.dataset.tab); };
+});
+addEventListener("hashchange", () => showTab(location.hash.slice(1)));
+
+function render() {
+  // devices
+  const devs = state.devices || [];
+  $("devices").innerHTML = devs.length ? devs.map((d) => `
+    <div class="card">
+      <div class="row" style="margin-top:0">
+        <strong>${esc(d.name || d.id)}</strong>
+        <div class="grow"></div>
+        <span class="pill ${d.online ? "on" : ""}">${d.online ? "online" : "offline"}</span>
+      </div>
+      <div class="kv"><span>id</span><span>${esc(d.id)}</span></div>
+      <div class="kv"><span>sdk</span><span>${esc(String(d.sdk ?? "—"))}</span></div>
+      <div class="kv"><span>last seen</span><span>${ago(Math.round(d.lastSeen / 1000))} ago</span></div>
+    </div>`).join("") : `<div class="card empty">No phone is polling. Start the relay app and point it at this server.</div>`;
+
+  // agents
+  const agents = state.agents || [];
+  $("agents") && ($("agents").innerHTML = "");
+  $("sver").textContent = (state.job && state.job.version) || "0.1.0";
+  $("sguard").textContent = `hops ≤ ${state.job.maxHops ?? "?"}, ${state.job.maxTurns ?? "?"} turns/agent`;
+  $("sattach").textContent = `${state.job.attachMax ?? "?"} msg / ${state.job.attachBytes ?? "?"} B`;
+  $("smcp").textContent = location.origin + (state.job.mcpPath || "/mcp");
+  $("mcpurl").textContent = location.origin + (state.job.mcpPath || "/mcp");
+
+  // threads
+  const threads = state.threads || [];
+  $("threads").innerHTML = threads.length ? threads.map((t) => `
+    <button data-thread="${esc(t.id)}" aria-current="${t.id === activeThread}">
+      <div class="tid">${esc(t.id)}</div>
+      <div class="muted">${t.hops}/${t.max_hops} hops · ${t.state}</div>
+    </button>`).join("") : `<div class="empty" style="padding:16px 0">No threads yet.</div>`;
+  document.querySelectorAll("#threads button").forEach((b) => {
+    b.onclick = () => { activeThread = b.dataset.thread; render(); loadThread(); };
+  });
+
+  const t = threads.find((x) => x.id === activeThread);
+  $("threadtitle").textContent = activeThread || "—";
+  const hops = t ? t.hops : 0, max = t ? t.max_hops : 1;
+  $("hopspill").textContent = `hops ${hops}/${max}`;
+  const m = $("hopmeter");
+  m.style.width = Math.min(100, Math.round((hops / Math.max(1, max)) * 100)) + "%";
+  m.className = hops >= max ? "max" : hops / Math.max(1, max) > 0.66 ? "hot" : "";
+  $("stop").disabled = !activeThread;
+
+  // transcript
+  const msgs = state.messages || [];
+  $("transcript").innerHTML = msgs.length ? msgs.map((mm) => `
+    <div class="msg ${mm.sender === "you" ? "mine" : ""}">
+      <div class="who">${esc(mm.sender)} · ${esc(mm.priority)} · hop ${mm.hops} · ${ago(mm.created)} ago</div>
+      <div class="body">${esc(mm.body)}</div>
+    </div>`).join("") : `<div class="empty">No messages in this thread.</div>`;
+  $("transcript").scrollTop = $("transcript").scrollHeight;
+
+  // audit
+  const rows = state.audit || [];
+  $("audit").innerHTML = rows.length ? rows.map((a) => `
+    <tr>
+      <td class="muted">${ago(a.ts)}</td>
+      <td class="mono">${esc(a.tool)}</td>
+      <td>${esc(a.agent)}</td>
+      <td class="mono">${esc(a.device || "—")}</td>
+      <td class="${a.ok ? "" : "err"}">${a.ms}</td>
+      <td class="mono muted" style="max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.args || "")}</td>
+    </tr>`).join("") : `<tr><td colspan="6" class="empty">Nothing yet.</td></tr>`;
+}
+
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+async function load() {
+  const s = await api("/api/state?thread=" + encodeURIComponent(activeThread));
+  state = s;
+  const picked = !activeThread && s.threads && s.threads.length > 0; // first paint: open the newest thread
+  if (picked) activeThread = s.threads[0].id;
+  render();
+  if (picked) await loadThread();
+}
+
+async function loadThread() {
+  if (!activeThread) return render();
+  const s = await api("/api/thread/" + encodeURIComponent(activeThread));
+  state.messages = s.messages;
+  render();
+}
+
+$("refresh").onclick = () => load().then(() => toast("refreshed"));
+$("addthread").onclick = async () => {
+  const id = $("newthread").value.trim();
+  if (!id) return;
+  activeThread = id;
+  $("newthread").value = "";
+  await api("/api/thread/" + encodeURIComponent(id) + "/ensure", { method: "POST" });
+  await load();
+  await loadThread();
+};
+$("send").onclick = async () => {
+  const body = $("body").value.trim();
+  if (!body || !activeThread) return;
+  $("body").value = "";
+  try {
+    await api("/api/say", {
+      method: "POST",
+      body: JSON.stringify({ thread_id: activeThread, body, as: $("as").value.trim() || "you" }),
+    });
+    await loadThread();
+  } catch (e) { toast("send failed", true); }
+};
+$("body").addEventListener("keydown", (e) => { if (e.key === "Enter") $("send").click(); });
+$("stop").onclick = async () => {
+  if (!activeThread) return;
+  await api("/api/stop", { method: "POST", body: JSON.stringify({ thread_id: activeThread }) });
+  toast("thread " + activeThread + " frozen");
+  await load();
+};
+
+function openWs() {
+  if (ws) ws.close();
+  api("/api/ticket").then((t) => {
+    const proto = location.protocol === "https:" ? "wss" : "ws";
+    ws = new WebSocket(`${proto}://${location.host}/ws?ticket=${encodeURIComponent(t.ticket)}`);
+    ws.onopen = () => { $("wdot").classList.add("on"); };
+    ws.onclose = () => {
+      $("wdot").classList.remove("on");
+      // Reconnect with backoff, never on a fixed timer: 1s, 2s, 4s... capped at 30s.
+      openWs._n = Math.min((openWs._n || 0) + 1, 5);
+      setTimeout(() => { if (csrf) openWs(); }, Math.min(30000, 1000 * 2 ** (openWs._n - 1)));
+    };
+    ws.onmessage = (ev) => {
+      openWs._n = 0;
+      try {
+        const msg = JSON.parse(ev.data);
+        if (msg.type === "state") {
+          // WS state pushes carry no messages (they are per-thread); keep the loaded transcript.
+          const keep = state.messages;
+          state = msg.data;
+          if (keep && keep.length) state.messages = keep;
+          render();
+        }
+        if (msg.type === "message" && msg.data.thread_id === activeThread) loadThread();
+      } catch {}
+    };
+  });
+}
+
+showTab(location.hash.slice(1));
+
+// First paint: if a session cookie is still valid, skip the login screen.
+api("/api/session").then((s) => {
+  if (s.ok) {
+    csrf = s.csrf;
+    $("login").classList.add("hide");
+    return load().then(openWs);
+  }
+  showLogin();
+}).catch(showLogin);
+</script>
+</body>
+</html>

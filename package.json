@@ -1,0 +1,21 @@
+{
+  "name": "hernas-mcp",
+  "version": "0.1.0",
+  "description": "Android control + AI-to-AI chat bridge over MCP. Piggyback message delivery, loop guards, no fixed-interval polling.",
+  "type": "module",
+  "bin": { "hernas": "./src/server.ts" },
+  "engines": { "node": ">=22.6" },
+  "scripts": {
+    "start": "node src/server.ts",
+    "http": "node src/server.ts --http",
+    "doctor": "node src/doctor.ts",
+    "key:rotate": "node src/server.ts --rotate-key",
+    "test": "node --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "ws": "^8.18.0",
+    "zod": "^4.0.0"
+  },
+  "license": "MIT"
+}
